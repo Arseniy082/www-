@@ -3,7 +3,7 @@ import fetch from "node-fetch"; // библиотека для запросов 
 async function checkSite() {
   try {
     // 🔗 Укажи здесь свой сайт:
-    const url = "https://example.com"; 
+    const url = "git@github.com:Arseniy082/www-.git"; 
 
     // Отправляем запрос на сайт
     const response = await fetch(url);
