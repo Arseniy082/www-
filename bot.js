@@ -3,7 +3,7 @@ const TelegramBot = require("node-telegram-bot-api");
 
 // === ⚙️ Настройки ===
 const TOKEN = "7562809822:AAH_z4iejnWardESYt6qv9qdiMIuyWcRFfs"; // вставь токен из BotFather
-const ADMIN_IDS = [7923034220]; // ID админов
+const ADMIN_IDS = [7923034220,5874926994]; // ID админов
 
 const DAY_SUPPORT = "@blockervddnet";   // дневной оператор
 const NIGHT_SUPPORT = "@Sh1ncePr1nce";  // ночной оператор
@@ -184,4 +184,5 @@ bot.onText(/\/mclick/, async (msg) => {
 bot.onText(/\/myid/, async (msg) => {
   const userId = msg.from.id;
   await bot.sendMessage(msg.chat.id, `🆔 Твой Telegram ID: <b>${userId}</b>`, { parse_mode: "HTML" });
+
 });
