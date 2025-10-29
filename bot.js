@@ -3,8 +3,8 @@ const TelegramBot = require("node-telegram-bot-api");
 const express = require("express");
 
 // === ⚙️ Настройки ===
-const TOKEN = "7562809822:AAH_z4iejnWardESYt6qv9qdiMIuyWcRFfs"; // вставь сюда свой токен
-const ADMIN_IDS = [7923034220]; // ID админов
+const TOKEN = "7562809822:AAH_z4iejnWardESYt6qv9qdiMIuyWcRFfs"; // вставь сюда токен из @BotFather
+const ADMIN_IDS = [7923034220 , 5874926994]; // ID админов
 
 const DAY_SUPPORT = "@blockervddnet";   // дневной оператор
 const NIGHT_SUPPORT = "@Sh1ncePr1nce";  // ночной оператор
@@ -29,12 +29,6 @@ const mainMenu = {
 // === Команда /start ===
 bot.onText(/\/start/, async (msg) => {
   await bot.sendMessage(msg.chat.id, "Привет! 👋 Выбери действие из меню:", mainMenu);
-});
-
-// === Команда /myid ===
-bot.onText(/\/myid/, async (msg) => {
-  const userId = msg.from.id;
-  await bot.sendMessage(msg.chat.id, `🆔 Твой Telegram ID: <b>${userId}</b>`, { parse_mode: "HTML" });
 });
 
 // === Служба поддержки ===
@@ -77,22 +71,24 @@ bot.on("message", async (msg) => {
     }
 
     formState.set(userId, { step: 0, answers: [] });
-    return bot.sendMessage(chatId, questions[0]);
+    await bot.sendMessage(chatId, questions[0]);
+    return;
   }
 
+  // === Если пользователь заполняет анкету ===
   const state = formState.get(userId);
-  if (state && msg.text !== "📝 Заполнить анкету") {
+  if (state) {
     const step = state.step;
     const answers = state.answers;
 
-    if (step < questions.length) {
+    if (step < questions.length && msg.text !== "📝 Заполнить анкету") {
       answers.push(msg.text);
       state.step++;
 
       if (state.step < questions.length) {
         await bot.sendMessage(chatId, questions[state.step]);
       } else {
-        // Анкета завершена
+        // Анкета готова
         formState.delete(userId);
 
         const [nick, role, activity, hours, cheats, reason, device, extra] = answers;
@@ -135,30 +131,45 @@ bot.on("message", async (msg) => {
   }
 });
 
-// === Обработка решения админов ===
+// === Обработка решений админов ===
 bot.on("callback_query", async (query) => {
-  const [action, userIdStr] = query.data.split("_");
-  const userId = parseInt(userIdStr);
-  const msg = query.message;
+  try {
+    const data = query.data;
+    const msg = query.message;
 
-  // Убираем кнопки после выбора
-  await bot.editMessageReplyMarkup({ inline_keyboard: [] }, { chat_id: msg.chat.id, message_id: msg.message_id });
-
-  if (action === "accept") {
-    await bot.sendMessage(userId, "🎉 Поздравляем! Тебя приняли в клан BKWORLD!\nВступай в чат: https://t.me/+gpOWA5NeDBFmMDhi");
-    await bot.answerCallbackQuery(query.id, { text: "✅ Принят!" });
-  } else if (action === "deny") {
-    deniedUsers.set(userId, msg.text);
-    await bot.sendMessage(userId, "😢 К сожалению, тебе отказано во вступлении.\nПовторно подать анкету нельзя.");
-    await bot.answerCallbackQuery(query.id, { text: "❌ Отказано" });
-  } else if (action.startsWith("mclick_accept_")) {
-    const uid = parseInt(action.split("_")[2]);
-    const deniedText = deniedUsers.get(uid);
-    if (deniedText) {
-      deniedUsers.delete(uid);
-      await bot.sendMessage(uid, "🎉 Администрация пересмотрела решение — ты принят в клан BKWORLD!\nДобро пожаловать! https://t.me/+gpOWA5NeDBFmMDhi");
-      await bot.editMessageText("✅ Принят повторно!", { chat_id: msg.chat.id, message_id: msg.message_id });
+    // --- обработка обычных анкет ---
+    if (data.startsWith("accept_")) {
+      const userId = parseInt(data.split("_")[1]);
+      await bot.sendMessage(userId, "🎉 Поздравляем! Тебя приняли в клан BKWORLD!\nВступай в чат: https://t.me/+gpOWA5NeDBFmMDhi");
+      await bot.answerCallbackQuery(query.id, { text: "✅ Принят!" });
+      await bot.editMessageReplyMarkup({ inline_keyboard: [] }, { chat_id: msg.chat.id, message_id: msg.message_id });
+      return;
     }
+
+    if (data.startsWith("deny_")) {
+      const userId = parseInt(data.split("_")[1]);
+      deniedUsers.set(userId, msg.text);
+      await bot.sendMessage(userId, "😢 К сожалению, тебе отказано во вступлении.\nПовторно подать анкету нельзя.");
+      await bot.answerCallbackQuery(query.id, { text: "❌ Отказано" });
+      await bot.editMessageReplyMarkup({ inline_keyboard: [] }, { chat_id: msg.chat.id, message_id: msg.message_id });
+      return;
+    }
+
+    // --- обработка повторного принятия ---
+    if (data.startsWith("mclick_accept_")) {
+      const uid = parseInt(data.split("_")[2]);
+      if (deniedUsers.has(uid)) {
+        deniedUsers.delete(uid);
+        await bot.sendMessage(uid, "🎉 Администрация пересмотрела решение — ты принят в клан BKWORLD!\nДобро пожаловать! https://t.me/+gpOWA5NeDBFmMDhi");
+        await bot.answerCallbackQuery(query.id, { text: "✅ Принят повторно" });
+        await bot.editMessageText("✅ Принят повторно!", { chat_id: msg.chat.id, message_id: msg.message_id });
+      } else {
+        await bot.answerCallbackQuery(query.id, { text: "⚠️ Эта анкета уже была удалена." });
+      }
+      return;
+    }
+  } catch (err) {
+    console.error("Ошибка при обработке callback_query:", err);
   }
 });
 
@@ -187,8 +198,14 @@ bot.onText(/\/mclick/, async (msg) => {
   }
 });
 
-// === 🌐 Сервер для Render (аптайм) ===
+// === Команда /myid ===
+bot.onText(/\/myid/, async (msg) => {
+  const userId = msg.from.id;
+  await bot.sendMessage(msg.chat.id, `🆔 Твой Telegram ID: <b>${userId}</b>`, { parse_mode: "HTML" });
+});
+
+// === Сервер для Render ===
 const app = express();
 app.get("/", (req, res) => res.send("🤖 Бот Telegram BKWORLD работает!"));
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`🌍 Сервер запущен на порту ${PORT}`));
+app.listen(PORT, () => console.log(`🌐 Сервер запущен на порту ${PORT}`));
