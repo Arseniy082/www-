@@ -9,11 +9,10 @@ const DAY_SUPPORT = "@blockervddnet";   // дневной оператор
 const NIGHT_SUPPORT = "@Sh1ncePr1nce";  // ночной оператор
 
 // Список пользователей, кому отказано
-const deniedUsers = new Set();
+const deniedUsers = new Map(); // userId -> анкета (текст)
 
 // === Создание бота ===
 const bot = new TelegramBot(TOKEN, { polling: true });
-
 console.log("✅ Бот запущен и слушает сообщения...");
 
 // === Главное меню ===
@@ -141,9 +140,48 @@ bot.on("callback_query", async (query) => {
   if (action === "accept") {
     await bot.sendMessage(userId, "🎉 Поздравляем! Тебя приняли в клан BKWORLD!\nВступай в чат: https://t.me/+gpOWA5NeDBFmMDhi");
     await bot.answerCallbackQuery(query.id, { text: "✅ Принят!" });
-  } else {
-    deniedUsers.add(userId);
+  } else if (action === "deny") {
+    deniedUsers.set(userId, msg.text); // сохраняем анкету
     await bot.sendMessage(userId, "😢 К сожалению, тебе отказано во вступлении.\nПовторно подать анкету нельзя.");
     await bot.answerCallbackQuery(query.id, { text: "❌ Отказано" });
+  } else if (action.startsWith("mclick_accept_")) {
+    const uid = parseInt(action.split("_")[2]);
+    const deniedText = deniedUsers.get(uid);
+    if (deniedText) {
+      deniedUsers.delete(uid);
+      await bot.sendMessage(uid, "🎉 Администрация пересмотрела решение, ты принят в клан BKWORLD! Добро пожаловать!\nhttps://t.me/+gpOWA5NeDBFmMDhi");
+      await bot.editMessageText("✅ Принят повторно!", { chat_id: msg.chat.id, message_id: msg.message_id });
+    }
   }
+});
+
+// === Команда /mclick (для админов) ===
+bot.onText(/\/mclick/, async (msg) => {
+  const userId = msg.from.id;
+
+  if (!ADMIN_IDS.includes(userId)) {
+    return bot.sendMessage(msg.chat.id, "🚫 У тебя недостаточно полномочий для этой команды.");
+  }
+
+  if (deniedUsers.size === 0) {
+    return bot.sendMessage(msg.chat.id, "📭 Нет отказанных анкет на данный момент.");
+  }
+
+  for (const [uid, formText] of deniedUsers.entries()) {
+    const opts = {
+      parse_mode: "HTML",
+      reply_markup: {
+        inline_keyboard: [
+          [{ text: "✅ Принять повторно", callback_data: `mclick_accept_${uid}` }]
+        ]
+      }
+    };
+    await bot.sendMessage(msg.chat.id, `📋 <b>Отказанная анкета:</b>\n\n${formText}`, opts);
+  }
+});
+
+// === Команда /myid ===
+bot.onText(/\/myid/, async (msg) => {
+  const userId = msg.from.id;
+  await bot.sendMessage(msg.chat.id, `🆔 Твой Telegram ID: <b>${userId}</b>`, { parse_mode: "HTML" });
 });
