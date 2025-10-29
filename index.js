@@ -1,27 +1,22 @@
-import fetch from "node-fetch"; // библиотека для запросов к сайтам
+import express from "express";
+import fetch from "node-fetch";
+
+const app = express();
 
 async function checkSite() {
   try {
-    // 🔗 Укажи здесь свой сайт:
-    const url = "git@github.com:Arseniy082/www-.git"; 
-
-    // Отправляем запрос на сайт
+    const url = "https://github.com/Arseniy082/www-"; // замени на свой сайт
     const response = await fetch(url);
     const html = await response.text();
-
-    // Проверяем, содержит ли страница определённое слово или имя
-    if (html.includes("Имя")) {
-      console.log("✅ Найдено имя на странице:", new Date().toLocaleTimeString());
-    } else {
-      console.log("❌ Имя не найдено на странице:", new Date().toLocaleTimeString());
-    }
+    if (html.includes("Имя")) console.log("✅ Найдено имя");
+    else console.log("❌ Имя не найдено");
   } catch (err) {
-    console.error("⚠️ Ошибка при проверке сайта:", err.message);
+    console.error("Ошибка:", err.message);
   }
 }
 
-// Первый запуск сразу
+setInterval(checkSite, 10 * 60 * 1000);
 checkSite();
 
-// Повторять каждые 10 минут (600 000 миллисекунд)
-setInterval(checkSite, 10 * 60 * 1000);
+app.get("/", (req, res) => res.send("Бот запущен ✅"));
+app.listen(3000, () => console.log("Сервер запущен на порту 3000"));
