@@ -1,9 +1,10 @@
-/ === Импорт библиотеки ===
+// === Импорт библиотек ===
 const TelegramBot = require("node-telegram-bot-api");
+const express = require("express");
 
 // === ⚙️ Настройки ===
-const TOKEN = "7562809822:AAH_z4iejnWardESYt6qv9qdiMIuyWcRFfs"; // вставь токен из BotFather
-const ADMIN_IDS = [7923034220,5874926994]; // ID админов
+const TOKEN = "7562809822:AAH_z4iejnWardESYt6qv9qdiMIuyWcRFfs"; // вставь сюда свой токен
+const ADMIN_IDS = [7923034220]; // ID админов
 
 const DAY_SUPPORT = "@blockervddnet";   // дневной оператор
 const NIGHT_SUPPORT = "@Sh1ncePr1nce";  // ночной оператор
@@ -28,6 +29,12 @@ const mainMenu = {
 // === Команда /start ===
 bot.onText(/\/start/, async (msg) => {
   await bot.sendMessage(msg.chat.id, "Привет! 👋 Выбери действие из меню:", mainMenu);
+});
+
+// === Команда /myid ===
+bot.onText(/\/myid/, async (msg) => {
+  const userId = msg.from.id;
+  await bot.sendMessage(msg.chat.id, `🆔 Твой Telegram ID: <b>${userId}</b>`, { parse_mode: "HTML" });
 });
 
 // === Служба поддержки ===
@@ -70,23 +77,22 @@ bot.on("message", async (msg) => {
     }
 
     formState.set(userId, { step: 0, answers: [] });
-    await bot.sendMessage(chatId, questions[0]);
+    return bot.sendMessage(chatId, questions[0]);
   }
 
-  // === Если пользователь заполняет анкету ===
   const state = formState.get(userId);
-  if (state) {
+  if (state && msg.text !== "📝 Заполнить анкету") {
     const step = state.step;
     const answers = state.answers;
 
-    if (step < questions.length && msg.text !== "📝 Заполнить анкету") {
+    if (step < questions.length) {
       answers.push(msg.text);
       state.step++;
 
       if (state.step < questions.length) {
         await bot.sendMessage(chatId, questions[state.step]);
       } else {
-        // Анкета готова
+        // Анкета завершена
         formState.delete(userId);
 
         const [nick, role, activity, hours, cheats, reason, device, extra] = answers;
@@ -135,13 +141,14 @@ bot.on("callback_query", async (query) => {
   const userId = parseInt(userIdStr);
   const msg = query.message;
 
+  // Убираем кнопки после выбора
   await bot.editMessageReplyMarkup({ inline_keyboard: [] }, { chat_id: msg.chat.id, message_id: msg.message_id });
 
   if (action === "accept") {
     await bot.sendMessage(userId, "🎉 Поздравляем! Тебя приняли в клан BKWORLD!\nВступай в чат: https://t.me/+gpOWA5NeDBFmMDhi");
     await bot.answerCallbackQuery(query.id, { text: "✅ Принят!" });
   } else if (action === "deny") {
-    deniedUsers.set(userId, msg.text); // сохраняем анкету
+    deniedUsers.set(userId, msg.text);
     await bot.sendMessage(userId, "😢 К сожалению, тебе отказано во вступлении.\nПовторно подать анкету нельзя.");
     await bot.answerCallbackQuery(query.id, { text: "❌ Отказано" });
   } else if (action.startsWith("mclick_accept_")) {
@@ -149,7 +156,7 @@ bot.on("callback_query", async (query) => {
     const deniedText = deniedUsers.get(uid);
     if (deniedText) {
       deniedUsers.delete(uid);
-      await bot.sendMessage(uid, "🎉 Администрация пересмотрела решение, ты принят в клан BKWORLD! Добро пожаловать!\nhttps://t.me/+gpOWA5NeDBFmMDhi");
+      await bot.sendMessage(uid, "🎉 Администрация пересмотрела решение — ты принят в клан BKWORLD!\nДобро пожаловать! https://t.me/+gpOWA5NeDBFmMDhi");
       await bot.editMessageText("✅ Принят повторно!", { chat_id: msg.chat.id, message_id: msg.message_id });
     }
   }
@@ -180,20 +187,8 @@ bot.onText(/\/mclick/, async (msg) => {
   }
 });
 
-// === Команда /myid ===
-bot.onText(/\/myid/, async (msg) => {
-  const userId = msg.from.id;
-  await bot.sendMessage(msg.chat.id, `🆔 Твой Telegram ID: <b>${userId}</b>`, { parse_mode: "HTML" });
-});
-
-// === Добавка для Render (чтобы бот не засыпал) ===
-const express = require("express");
+// === 🌐 Сервер для Render (аптайм) ===
 const app = express();
-
-app.get("/", (req, res) => {
-  res.send("🤖 Бот Telegram BKWORLD работает!");
-});
-
+app.get("/", (req, res) => res.send("🤖 Бот Telegram BKWORLD работает!"));
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`🌐 Сервер запущен на порту ${PORT}`));
-
+app.listen(PORT, () => console.log(`🌍 Сервер запущен на порту ${PORT}`));
