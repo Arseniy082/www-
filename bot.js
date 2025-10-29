@@ -1,4 +1,4 @@
-// === Импорт библиотеки ===
+/ === Импорт библиотеки ===
 const TelegramBot = require("node-telegram-bot-api");
 
 // === ⚙️ Настройки ===
@@ -184,5 +184,15 @@ bot.onText(/\/mclick/, async (msg) => {
 bot.onText(/\/myid/, async (msg) => {
   const userId = msg.from.id;
   await bot.sendMessage(msg.chat.id, `🆔 Твой Telegram ID: <b>${userId}</b>`, { parse_mode: "HTML" });
-
 });
+
+// === Добавка для Render (чтобы бот не засыпал) ===
+const express = require("express");
+const app = express();
+
+app.get("/", (req, res) => {
+  res.send("🤖 Бот Telegram BKWORLD работает!");
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`🌐 Сервер запущен на порту ${PORT}`));
