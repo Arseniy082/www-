@@ -6,8 +6,8 @@ const express = require("express");
 const TOKEN = "8290623062:AAF9duRlshGh7ZDMuppGT2nvSTvLOPm0upE"; // токен из @BotFather
 const ADMIN_IDS = [7889635811]; // ID админов
 
-const DAY_SUPPORT = "@blockervddnet";   // дневной оператор
-const NIGHT_SUPPORT = "@Sh1ncePr1nce";  // ночной оператор
+const DAY_SUPPORT = "@ddNef0r";   // дневной оператор
+const NIGHT_SUPPORT = "пока нету....";  // ночной оператор
 
 // === Хранилища ===
 const deniedUsers = new Map(); // userId -> текст анкеты
@@ -161,7 +161,7 @@ bot.on("callback_query", async (query) => {
     // --- Принять ---
     if (data.startsWith("accept_")) {
       const userId = parseInt(data.split("_")[1]);
-      await bot.sendMessage(userId, "🎉 Поздравляем! Тебя приняли в клан BKWORLD!\nВступай в чат: https://t.me/+gpOWA5NeDBFmMDhi");
+      await bot.sendMessage(userId, "🎉 Поздравляем! Тебя приняли в клан Mopstyle!\nВступай в чат: https://t.me/+OJQkVgIy3CFjMjQy");
       await bot.answerCallbackQuery(query.id, { text: "✅ Принят!" });
       await bot.editMessageReplyMarkup({ inline_keyboard: [] }, { chat_id: msg.chat.id, message_id: msg.message_id });
       return;
@@ -229,5 +229,6 @@ const app = express();
 app.get("/", (req, res) => res.send("🤖 Бот Telegram BKWORLD работает!"));
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`🌐 Сервер запущен на порту ${PORT}`));
+
 
 
