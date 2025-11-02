@@ -3,8 +3,8 @@ const TelegramBot = require("node-telegram-bot-api");
 const express = require("express");
 
 // === ⚙️ Настройки ===
-const TOKEN = "7562809822:AAH_z4iejnWardESYt6qv9qdiMIuyWcRFfs"; // токен из @BotFather
-const ADMIN_IDS = [7923034220, 5874926994]; // ID админов
+const TOKEN = "8290623062:AAF9duRlshGh7ZDMuppGT2nvSTvLOPm0upE"; // токен из @BotFather
+const ADMIN_IDS = [7889635811]; // ID админов
 
 const DAY_SUPPORT = "@blockervddnet";   // дневной оператор
 const NIGHT_SUPPORT = "@Sh1ncePr1nce";  // ночной оператор
@@ -229,4 +229,5 @@ const app = express();
 app.get("/", (req, res) => res.send("🤖 Бот Telegram BKWORLD работает!"));
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`🌐 Сервер запущен на порту ${PORT}`));
+
 
