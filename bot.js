@@ -182,7 +182,7 @@ bot.on("callback_query", async (query) => {
       const uid = parseInt(data.split("_")[2]);
       if (deniedUsers.has(uid)) {
         deniedUsers.delete(uid);
-        await bot.sendMessage(uid, "🎉 Администрация пересмотрела решение — ты принят в клан BKWORLD!\nДобро пожаловать! https://t.me/+gpOWA5NeDBFmMDhi");
+        await bot.sendMessage(uid, "🎉 Администрация пересмотрела решение — ты принят в клан Mopstyle!\nДобро пожаловать! https://t.me/+OJQkVgIy3CFjMjQy");
         await bot.answerCallbackQuery(query.id, { text: "✅ Принят повторно" });
         await bot.editMessageText("✅ Принят повторно!", { chat_id: msg.chat.id, message_id: msg.message_id });
       } else {
@@ -226,9 +226,10 @@ bot.onText(/\/myid/, async (msg) => {
 
 // === Сервер для Render ===
 const app = express();
-app.get("/", (req, res) => res.send("🤖 Бот Telegram BKWORLD работает!"));
+app.get("/", (req, res) => res.send("🤖 Бот Telegram Mopstyle работает!"));
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`🌐 Сервер запущен на порту ${PORT}`));
+
 
 
 
